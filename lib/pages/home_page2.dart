@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:goods_scanner/models/models.dart';
 import 'package:goods_scanner/utils/sql.dart';
 import 'package:flutter_zxing/flutter_zxing.dart';
 import 'package:flutter/foundation.dart';
 
 class GoodsScannerApp extends StatefulWidget {
-  const GoodsScannerApp({super.key, required this.title});
-
-  final String title;
+  const GoodsScannerApp({super.key});
 
   @override
   State<GoodsScannerApp> createState() => _GoodsScannerApp();
@@ -21,10 +20,15 @@ class _GoodsScannerApp extends State<GoodsScannerApp> {
   final priceController = TextEditingController();
   bool isEditing = false;
   late Goods _goods;
+  DateTime _lastPressedAt = DateTime(0);
+  late FToast fToast;
 
   @override
   void initState() {
     super.initState();
+    fToast = FToast();
+    // if you want to use context from globally instead of content we need to pass navigatorKey.currentContext!
+    fToast.init(context);
     //scanHelper = ScanHelper();
     dbHelper = DatabaseHelper();
     dbHelper.initDB().whenComplete(() async {
@@ -34,71 +38,104 @@ class _GoodsScannerApp extends State<GoodsScannerApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        resizeToAvoidBottomInset: false,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
-        ),
-        body: Column(
-          children: <Widget>[
-            Expanded(
-                child: Column(
-              children: [
-                Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Form(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                          TextFormField(
-                            controller: nameController,
-                            decoration: const InputDecoration(labelText: '商品名'),
-                          ),
-                          TextFormField(
-                            controller: priceController,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9.]')),
-                            ],
-                            decoration: const InputDecoration(labelText: '价格'),
-                          ),
-                          Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Container(
-                                    margin: const EdgeInsets.symmetric(
-                                        vertical: 10),
-                                    child: ElevatedButton(
-                                      onPressed: addOrEditGoods,
-                                      child: const Text('提交'),
-                                    )),
-                              ])
-                        ]))),
-                Expanded(
-                  flex: 1,
-                  child: SafeArea(child: goodsWidget()),
-                )
-              ],
-            )),
-          ],
-        ),
-        floatingActionButton: SizedBox(
-          width: 80,
-          height: 80,
-          child: FloatingActionButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ScanPage(),
-                ),
-              );
-            },
-            child: const Icon(Icons.add),
+    return WillPopScope(
+      child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            title: const Text('商品扫描器'),
           ),
-        ));
+          body: Column(
+            children: <Widget>[
+              Expanded(
+                  child: Column(
+                children: [
+                  /*
+                  Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Form(
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                            TextFormField(
+                              controller: nameController,
+                              decoration:
+                                  const InputDecoration(labelText: '商品名'),
+                            ),
+                            TextFormField(
+                              controller: priceController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                    RegExp(r'[0-9.]')),
+                              ],
+                              decoration:
+                                  const InputDecoration(labelText: '价格'),
+                            ),
+                            Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 10),
+                                      child: ElevatedButton(
+                                        onPressed: addOrEditGoods,
+                                        child: const Text('提交'),
+                                      )),
+                                ])
+                          ]))),*/
+                  Expanded(
+                    flex: 1,
+                    child: SafeArea(child: goodsWidget()),
+                  )
+                ],
+              )),
+            ],
+          ),
+          floatingActionButton: SizedBox(
+            width: 80,
+            height: 80,
+            child: FloatingActionButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ScanPage(),
+                  ),
+                );
+              },
+              child: const Icon(Icons.add),
+            ),
+          )),
+      onWillPop: () async {
+        debugPrint(_lastPressedAt.toString());
+        if (_lastPressedAt == DateTime(0) ||
+            DateTime.now().difference(_lastPressedAt) >
+                const Duration(seconds: 1)) {
+          _lastPressedAt = DateTime.now();
+          _showToast();
+          return false; // 不退出
+        }
+        return true; //退出
+      },
+    );
+  }
+
+  _showToast() {
+    Widget toast = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25.0),
+        color: Colors.greenAccent,
+      ),
+      child: const Text("再按一次退出"),
+    );
+
+    fToast.showToast(
+      child: toast,
+      gravity: ToastGravity.BOTTOM,
+      toastDuration: const Duration(seconds: 2),
+    );
   }
 
   Future<void> addOrEditGoods() async {
@@ -403,12 +440,17 @@ class _ScanResultWidget extends State<ScanResultWidget> {
   Widget build(BuildContext context) {
     final priceController = TextEditingController();
     final priceController2 = TextEditingController();
+    dynamic rawCode = '';
     FocusNode focusNode = FocusNode();
     FocusNode focusNode2 = FocusNode();
     return FutureBuilder(
         future: dbHelper.retrieveGoodsPrice(widget.result?.text),
         builder: (BuildContext context, AsyncSnapshot<List<Goods>> snapshot) {
+          rawCode = widget.result?.text ?? 'x';
           if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+            // 数据库有数据
+            priceController.text = snapshot.data![0].price;
+            priceController2.text = snapshot.data![0].name;
             return Center(
               child: Padding(
                 padding: const EdgeInsets.only(left: 60.0),
@@ -436,12 +478,17 @@ class _ScanResultWidget extends State<ScanResultWidget> {
                           '原码: ',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        Text(
-                          widget.result?.text ?? '',
-                          style: Theme.of(context).textTheme.titleLarge,
+                        SizedBox(
+                          width: 200,
+                          child: Text(
+                            widget.result?.text ?? '',
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 5),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
@@ -459,8 +506,8 @@ class _ScanResultWidget extends State<ScanResultWidget> {
                               onEditingComplete: () {
                                 FocusScope.of(context).requestFocus(focusNode2);
                               },
-                              decoration: InputDecoration(
-                                hintText: snapshot.data![0].name,
+                              decoration: const InputDecoration(
+                                helperText: '商品名称-已登记',
                               )),
                         ),
                       ],
@@ -487,8 +534,8 @@ class _ScanResultWidget extends State<ScanResultWidget> {
                               FilteringTextInputFormatter.allow(
                                   RegExp(r'[0-9.]')),
                             ],
-                            decoration: InputDecoration(
-                              hintText: snapshot.data![0].price,
+                            decoration: const InputDecoration(
+                              helperText: '单位：元',
                             ),
                           ),
                         ),
@@ -499,10 +546,15 @@ class _ScanResultWidget extends State<ScanResultWidget> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         ElevatedButton(
-                          onPressed: widget.onScanAgain,
+                          onPressed: () => updateGoods(
+                              Goods(
+                                  code: rawCode.toString(),
+                                  name: priceController2.text.toString(),
+                                  price: priceController.text.toString()),
+                              context),
                           child: const Text('提交'),
                         ),
-                        const SizedBox(width: 20),
+                        const SizedBox(width: 60),
                         ElevatedButton(
                           onPressed: widget.onScanAgain,
                           child: const Text('继续扫描'),
@@ -514,6 +566,7 @@ class _ScanResultWidget extends State<ScanResultWidget> {
               ),
             );
           } else {
+            // 数据库无数据
             return Center(
               child: Padding(
                 padding: const EdgeInsets.only(left: 60.0),
@@ -541,13 +594,17 @@ class _ScanResultWidget extends State<ScanResultWidget> {
                           '原码: ',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        Text(
-                          widget.result?.text ?? '',
-                          style: Theme.of(context).textTheme.titleLarge,
+                        SizedBox(
+                          width: 200,
+                          child: Text(
+                            widget.result?.text ?? '',
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 5),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
@@ -566,7 +623,7 @@ class _ScanResultWidget extends State<ScanResultWidget> {
                               FocusScope.of(context).requestFocus(focusNode2);
                             },
                             decoration:
-                                const InputDecoration(helperText: '商品名称'),
+                                const InputDecoration(helperText: '商品名称-未登记'),
                           ),
                         ),
                       ],
@@ -604,7 +661,12 @@ class _ScanResultWidget extends State<ScanResultWidget> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         ElevatedButton(
-                          onPressed: widget.onScanAgain,
+                          onPressed: () => addGoods(
+                              Goods(
+                                  code: rawCode.toString(),
+                                  name: priceController2.text.toString(),
+                                  price: priceController.text.toString()),
+                              context),
                           child: const Text('提交'),
                         ),
                         const SizedBox(width: 60),
@@ -620,6 +682,28 @@ class _ScanResultWidget extends State<ScanResultWidget> {
             );
           }
         });
+  }
+
+  Future<void> addGoods(Goods goods, dynamic context) async {
+    dynamic result = await dbHelper.insertGoods(goods);
+    debugPrint(result.toString());
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => const GoodsScannerApp(),
+      ),
+      (route) => false,
+    );
+  }
+
+  Future<void> updateGoods(Goods goods, dynamic context) async {
+    dynamic result = await dbHelper.updateGoodsWithCode(goods);
+    debugPrint(result.toString());
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => const GoodsScannerApp(),
+      ),
+      (route) => false,
+    );
   }
 }
 

@@ -56,6 +56,16 @@ class DatabaseHelper {
     return result;
   }
 
+  Future<int> updateGoodsWithCode(Goods goods) async {
+    int result = await db.update(
+      'goods',
+      {'name': goods.name, 'price': goods.price},
+      where: "code = ?",
+      whereArgs: [goods.code],
+    );
+    return result;
+  }
+
   Future<List<Goods>> retrieveGoodsPrice(String? goodsCode) async {
     final List<Map<String, Object?>> queryResult =
         await db.query('goods', where: "code = ?", whereArgs: [goodsCode]);

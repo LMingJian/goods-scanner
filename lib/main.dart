@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 // import 'package:goods_scaner/pages/home_page.dart';
 import 'package:goods_scanner/pages/home_page2.dart';
 
@@ -15,13 +16,11 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  static const appTitle = '商品扫描器';
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: appTitle,
+      title: '商品扫描器',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -41,7 +40,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const GoodsScannerApp(title: appTitle),
+      builder: FToastBuilder(),
+      home: const GoodsScannerApp(),
       debugShowCheckedModeBanner: false,
     );
   }
