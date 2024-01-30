@@ -15,8 +15,30 @@
 ## 注意
 
 - 项目支持的最低 Android SDK 为 21，请在运行代码前修改 `.\android\app\build.gradle` 里的 `minSdkVersion` 为 21。
-- 项目使用 Flutter 3.10.0
-- 项目使用 Dart 3.0.0
+- 项目使用 Flutter 3.16.5
+- 项目使用 Dart 3.2.3
+
+## 2024-01-30 更新事项
+
+替换依赖 flutter_zxing 为 ^1.5.2。
+
+由于这个版本的 flutter_zxing 最低要求 Dart 为 3.1.0，因此需要更新 Flutter 版本来适应。
+
+注意，在替换版本后，项目构建会强制连接 Github，在中国的环境中，需要挂代理，或使用其他加速方式。
+
+注意，如果用户使用 Steam++ 这类加速软件，则项目构建会出现报错：PKIX path building failed，这是由于 Java 无法识别经过加速后的 Github 连接是否安全，SSL 验证无法通过。解决方法是通过 Java 自带的 kettool 将加速软件的证书导入。
+
+参考：[JAVA 导入信任证书 (Keytool 的使用)](https://blog.csdn.net/ljskr/article/details/84570573)
+
+```bash
+# 使用管理员权限开启命令行
+# keytool 和 java 在同一个文件夹内
+cd $JAVA_HOME/bin/
+.\keytool -import -alias githubsteam -keystore ../lib/security/cacerts -file SteamTools.Certificate.cer
+# SteamTools.Certificate.cer 是 Steam++ 的证书
+# 导入成功后通过下面命令查看
+.\keytool -list -keystore ../lib/security/cacerts
+```
 
 ## 图示
 
