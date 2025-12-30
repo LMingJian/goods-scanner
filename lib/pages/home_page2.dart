@@ -38,18 +38,18 @@ class _GoodsScannerApp extends State<GoodsScannerApp> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
+    return PopScope(
       child: Scaffold(
-          resizeToAvoidBottomInset: false,
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-            title: const Text('商品扫描器'),
-          ),
-          body: Column(
-            children: <Widget>[
-              Expanded(
-                  child: Column(
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Text('商品扫描器'),
+        ),
+        body: Column(
+          children: <Widget>[
+            Expanded(
+              child: Column(
                 children: [
                   /*
                   Padding(
@@ -85,43 +85,40 @@ class _GoodsScannerApp extends State<GoodsScannerApp> {
                                       )),
                                 ])
                           ]))),*/
-                  Expanded(
-                    flex: 1,
-                    child: SafeArea(child: goodsWidget()),
-                  )
+                  Expanded(flex: 1, child: SafeArea(child: goodsWidget())),
                 ],
-              )),
-            ],
-          ),
-          floatingActionButton: SizedBox(
-            width: 80,
-            height: 80,
-            child: FloatingActionButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const ScanPage(),
-                  ),
-                );
-              },
-              child: const Icon(Icons.add),
+              ),
             ),
-          )),
-      onWillPop: () async {
+          ],
+        ),
+        floatingActionButton: SizedBox(
+          width: 80,
+          height: 80,
+          child: FloatingActionButton(
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (context) => const ScanPage()));
+            },
+            child: const Icon(Icons.add),
+          ),
+        ),
+      ),
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
         debugPrint(_lastPressedAt.toString());
         if (_lastPressedAt == DateTime(0) ||
             DateTime.now().difference(_lastPressedAt) >
                 const Duration(seconds: 1)) {
           _lastPressedAt = DateTime.now();
           _showToast();
-          return false; // 不退出
+          return; // 不退出
         }
-        return true; //退出
+        return; //退出
       },
     );
   }
 
-  _showToast() {
+  void _showToast() {
     Widget toast = Container(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
       decoration: BoxDecoration(
@@ -174,69 +171,72 @@ class _GoodsScannerApp extends State<GoodsScannerApp> {
       builder: (BuildContext context, AsyncSnapshot<List<Goods>> snapshot) {
         if (snapshot.hasData) {
           return ListView.builder(
-              itemCount: snapshot.data?.length,
-              itemBuilder: (context, position) {
-                return Dismissible(
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      color: Colors.red,
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                      child: const Icon(Icons.delete_forever),
-                    ),
-                    key: UniqueKey(),
-                    onDismissed: (DismissDirection direction) async {
-                      await dbHelper.deleteGoods(snapshot.data![position].id!);
-                    },
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => populateFields(snapshot.data![position]),
-                      child: Column(
+            itemCount: snapshot.data?.length,
+            itemBuilder: (context, position) {
+              return Dismissible(
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  child: const Icon(Icons.delete_forever),
+                ),
+                key: UniqueKey(),
+                onDismissed: (DismissDirection direction) async {
+                  await dbHelper.deleteGoods(snapshot.data![position].id!);
+                },
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => populateFields(snapshot.data![position]),
+                  child: Column(
+                    children: <Widget>[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        12.0, 12.0, 12.0, 6.0),
-                                    child: Text(
-                                      snapshot.data![position].name,
-                                      style: const TextStyle(
-                                          fontSize: 20.0,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
-                              ),
                               Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    Text(
-                                      '${snapshot.data![position].price}元',
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
+                                padding: const EdgeInsets.fromLTRB(
+                                  12.0,
+                                  12.0,
+                                  12.0,
+                                  6.0,
+                                ),
+                                child: Text(
+                                  snapshot.data![position].name,
+                                  style: const TextStyle(
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          const Divider(
-                            height: 2.0,
-                            color: Colors.grey,
-                          )
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                Text(
+                                  '${snapshot.data![position].price}元',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    ));
-              });
+                      const Divider(height: 2.0, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
         } else {
           return const Center(child: CircularProgressIndicator());
         }
@@ -271,13 +271,12 @@ class _ScanPage extends State<ScanPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: scanWidget(),
-    );
+    return Scaffold(body: scanWidget());
   }
 
   Widget scanWidget() {
-    final isCameraSupported = defaultTargetPlatform == TargetPlatform.iOS ||
+    final isCameraSupported =
+        defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.android;
     if (kIsWeb) {
       // 如果应用程序被编译为在web上运行，则该常量为true。
@@ -317,14 +316,14 @@ class _ScanPage extends State<ScanPage> {
     }
   }
 
-  _onScanSuccess(Code? code) {
+  void _onScanSuccess(Code? code) {
     setState(() {
       successScans++;
       result = code;
     });
   }
 
-  _onScanFailure(Code? code) {
+  void _onScanFailure(Code? code) {
     setState(() {
       failedScans++;
       result = code;
@@ -334,14 +333,14 @@ class _ScanPage extends State<ScanPage> {
     }
   }
 
-  _showMessage(BuildContext context, String message) {
+  void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  _onReset() {
+  void _onReset() {
     setState(() {
       successScans = 0;
       failedScans = 0;
@@ -368,8 +367,9 @@ class DebugInfoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextStyle? style =
-        Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white);
+    TextStyle? style = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: Colors.white);
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
@@ -399,10 +399,7 @@ class DebugInfoWidget extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                TextButton(
-                  onPressed: onReset,
-                  child: const Text('Reset'),
-                ),
+                TextButton(onPressed: onReset, child: const Text('Reset')),
               ],
             ),
           ),
@@ -413,8 +410,11 @@ class DebugInfoWidget extends StatelessWidget {
 }
 
 class ScanResultWidget extends StatefulWidget {
-  const ScanResultWidget(
-      {super.key, required this.result, required this.onScanAgain});
+  const ScanResultWidget({
+    super.key,
+    required this.result,
+    required this.onScanAgain,
+  });
 
   final Code? result;
   final Function()? onScanAgain;
@@ -444,253 +444,257 @@ class _ScanResultWidget extends State<ScanResultWidget> {
     FocusNode focusNode = FocusNode();
     FocusNode focusNode2 = FocusNode();
     return FutureBuilder(
-        future: dbHelper.retrieveGoodsPrice(widget.result?.text),
-        builder: (BuildContext context, AsyncSnapshot<List<Goods>> snapshot) {
-          rawCode = widget.result?.text ?? 'x';
-          if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-            // 数据库有数据
-            priceController.text = snapshot.data![0].price;
-            priceController2.text = snapshot.data![0].name;
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 60.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          '码型: ',
+      future: dbHelper.retrieveGoodsPrice(widget.result?.text),
+      builder: (BuildContext context, AsyncSnapshot<List<Goods>> snapshot) {
+        rawCode = widget.result?.text ?? 'x';
+        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          // 数据库有数据
+          priceController.text = snapshot.data![0].price;
+          priceController2.text = snapshot.data![0].name;
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 60.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '码型: ',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Text(
+                        widget.result?.format?.name ?? '未知编码',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '原码: ',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(
+                        width: 200,
+                        child: Text(
+                          widget.result?.text ?? '',
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        Text(
-                          widget.result?.format?.name ?? '未知编码',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          '原码: ',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        SizedBox(
-                          width: 200,
-                          child: Text(
-                            widget.result?.text ?? '',
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '名称: ',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(
+                        width: 160,
+                        child: TextFormField(
+                          controller: priceController2,
+                          textAlign: TextAlign.center,
+                          focusNode: focusNode2,
+                          onTapOutside: (e) => {focusNode2.unfocus()},
+                          onEditingComplete: () {
+                            FocusScope.of(context).requestFocus(focusNode2);
+                          },
+                          decoration: const InputDecoration(
+                            helperText: '商品名称-已登记',
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          '名称: ',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        SizedBox(
-                          width: 160,
-                          child: TextFormField(
-                              controller: priceController2,
-                              textAlign: TextAlign.center,
-                              focusNode: focusNode2,
-                              onTapOutside: (e) => {focusNode2.unfocus()},
-                              onEditingComplete: () {
-                                FocusScope.of(context).requestFocus(focusNode2);
-                              },
-                              decoration: const InputDecoration(
-                                helperText: '商品名称-已登记',
-                              )),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          '价格: ',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        SizedBox(
-                          width: 160,
-                          child: TextFormField(
-                            controller: priceController,
-                            textAlign: TextAlign.center,
-                            keyboardType: TextInputType.number,
-                            focusNode: focusNode,
-                            onTapOutside: (e) => {focusNode.unfocus()},
-                            onEditingComplete: () {
-                              FocusScope.of(context).requestFocus(focusNode);
-                            },
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9.]')),
-                            ],
-                            decoration: const InputDecoration(
-                              helperText: '单位：元',
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '价格: ',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(
+                        width: 160,
+                        child: TextFormField(
+                          controller: priceController,
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          focusNode: focusNode,
+                          onTapOutside: (e) => {focusNode.unfocus()},
+                          onEditingComplete: () {
+                            FocusScope.of(context).requestFocus(focusNode);
+                          },
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
                             ),
+                          ],
+                          decoration: const InputDecoration(helperText: '单位：元'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => updateGoods(
+                          Goods(
+                            code: rawCode.toString(),
+                            name: priceController2.text.toString(),
+                            price: priceController.text.toString(),
                           ),
+                          context,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () => updateGoods(
-                              Goods(
-                                  code: rawCode.toString(),
-                                  name: priceController2.text.toString(),
-                                  price: priceController.text.toString()),
-                              context),
-                          child: const Text('提交'),
-                        ),
-                        const SizedBox(width: 60),
-                        ElevatedButton(
-                          onPressed: widget.onScanAgain,
-                          child: const Text('继续扫描'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                        child: const Text('提交'),
+                      ),
+                      const SizedBox(width: 60),
+                      ElevatedButton(
+                        onPressed: widget.onScanAgain,
+                        child: const Text('继续扫描'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            );
-          } else {
-            // 数据库无数据
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 60.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          '码型: ',
+            ),
+          );
+        } else {
+          // 数据库无数据
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 60.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '码型: ',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Text(
+                        widget.result?.format?.name ?? '未知编码',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '原码: ',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(
+                        width: 200,
+                        child: Text(
+                          widget.result?.text ?? '',
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        Text(
-                          widget.result?.format?.name ?? '未知编码',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          '原码: ',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        SizedBox(
-                          width: 200,
-                          child: Text(
-                            widget.result?.text ?? '',
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '名称: ',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(
+                        width: 160,
+                        child: TextFormField(
+                          controller: priceController2,
+                          textAlign: TextAlign.center,
+                          focusNode: focusNode2,
+                          onTapOutside: (e) => {focusNode2.unfocus()},
+                          onEditingComplete: () {
+                            FocusScope.of(context).requestFocus(focusNode2);
+                          },
+                          decoration: const InputDecoration(
+                            helperText: '商品名称-未登记',
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          '名称: ',
-                          style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '价格: ',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(
+                        width: 160,
+                        child: TextFormField(
+                          controller: priceController,
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          focusNode: focusNode,
+                          onTapOutside: (e) => {focusNode.unfocus()},
+                          onEditingComplete: () {
+                            FocusScope.of(context).requestFocus(focusNode);
+                          },
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
+                            ),
+                          ],
+                          decoration: const InputDecoration(helperText: '单位：元'),
                         ),
-                        SizedBox(
-                          width: 160,
-                          child: TextFormField(
-                            controller: priceController2,
-                            textAlign: TextAlign.center,
-                            focusNode: focusNode2,
-                            onTapOutside: (e) => {focusNode2.unfocus()},
-                            onEditingComplete: () {
-                              FocusScope.of(context).requestFocus(focusNode2);
-                            },
-                            decoration:
-                                const InputDecoration(helperText: '商品名称-未登记'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => addGoods(
+                          Goods(
+                            code: rawCode.toString(),
+                            name: priceController2.text.toString(),
+                            price: priceController.text.toString(),
                           ),
+                          context,
                         ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          '价格: ',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        SizedBox(
-                          width: 160,
-                          child: TextFormField(
-                            controller: priceController,
-                            textAlign: TextAlign.center,
-                            keyboardType: TextInputType.number,
-                            focusNode: focusNode,
-                            onTapOutside: (e) => {focusNode.unfocus()},
-                            onEditingComplete: () {
-                              FocusScope.of(context).requestFocus(focusNode);
-                            },
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9.]')),
-                            ],
-                            decoration:
-                                const InputDecoration(helperText: '单位：元'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () => addGoods(
-                              Goods(
-                                  code: rawCode.toString(),
-                                  name: priceController2.text.toString(),
-                                  price: priceController.text.toString()),
-                              context),
-                          child: const Text('提交'),
-                        ),
-                        const SizedBox(width: 60),
-                        ElevatedButton(
-                          onPressed: widget.onScanAgain,
-                          child: const Text('继续扫描'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                        child: const Text('提交'),
+                      ),
+                      const SizedBox(width: 60),
+                      ElevatedButton(
+                        onPressed: widget.onScanAgain,
+                        child: const Text('继续扫描'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            );
-          }
-        });
+            ),
+          );
+        }
+      },
+    );
   }
 
   Future<void> addGoods(Goods goods, dynamic context) async {
     dynamic result = await dbHelper.insertGoods(goods);
     debugPrint(result.toString());
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => const GoodsScannerApp(),
-      ),
+      MaterialPageRoute(builder: (context) => const GoodsScannerApp()),
       (route) => false,
     );
   }
@@ -699,9 +703,7 @@ class _ScanResultWidget extends State<ScanResultWidget> {
     dynamic result = await dbHelper.updateGoodsWithCode(goods);
     debugPrint(result.toString());
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => const GoodsScannerApp(),
-      ),
+      MaterialPageRoute(builder: (context) => const GoodsScannerApp()),
       (route) => false,
     );
   }
@@ -713,10 +715,7 @@ class UnsupportedPlatformWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Text(
-        '此平台尚不支持',
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
+      child: Text('此平台尚不支持', style: Theme.of(context).textTheme.titleLarge),
     );
   }
 }

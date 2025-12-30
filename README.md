@@ -14,9 +14,51 @@
 
 ## 注意
 
-- 项目支持的最低 Android SDK 为 21，请在运行代码前修改 `.\android\app\build.gradle` 里的 `minSdkVersion` 为 21。
-- 项目使用 Flutter 3.16.5
-- 项目使用 Dart 3.2.3
+- 项目使用 ~~Flutter 3.16.5~~，2025-12-30 升级为 Flutter 3.38.5
+- 项目使用 ~~Dart 3.2.3~~，2025-12-30 升级为 Dart 3.10.4
+- APP 名称修改 `android/app/src/main/AndroidManifest.xml` 中的 `android:label`
+- APP 包名修改，请使用正则搜索并替换 `com.(.*).goods`
+- 运行 `lib\main.dart` 中的 `main()` 函数
+- 依赖在 `pubspec.yaml`
+- 打包 `flutter build apk --release`
+
+## 图示
+
+<img src=".\picture\1.png" alt="1" style="zoom:50%;" />  <img src=".\picture\2.png" alt="2" style="zoom:50%;" />  <img src=".\picture\3.png" alt="3" style="zoom:50%;" />
+
+## 2025-12-30 更新事项
+
+更新 Flutter 为当前最新版本 3.38.5。
+
+网络优化请参照以下内容：
+
+**添加环境变量**
+
+```
+PUB_HOSTED_URL="https://pub.flutter-io.cn" 
+FLUTTER_STORAGE_BASE_URL="https://storage.flutter-io.cn"
+```
+
+**修改 Gradle 的下载地址**
+
+Path：`android\gradle\wrapper\gradle-wrapper.properties`
+
+```
+distributionUrl=https\://mirrors.aliyun.com/macports/distfiles/gradle/gradle-8.14-all.zip
+```
+
+**配置 build.gradle.kts 和 settings.gradle.kts 文件**
+
+Path：`android\build.gradle.kts, settings.gradle.kts`
+
+```
+repositories {
+    maven(url = "https://maven.aliyun.com/repository/public/") 
+    maven(url = "https://maven.aliyun.com/repository/central") 
+    maven(url = "https://maven.aliyun.com/repository/google") 
+    maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
+}
+```
 
 ## 2024-01-30 更新事项
 
@@ -39,7 +81,3 @@ cd $JAVA_HOME/bin/
 # 导入成功后通过下面命令查看
 .\keytool -list -keystore ../lib/security/cacerts
 ```
-
-## 图示
-
-<img src=".\picture\1.png" alt="1" style="zoom:50%;" />  <img src=".\picture\2.png" alt="2" style="zoom:50%;" />  <img src=".\picture\3.png" alt="3" style="zoom:50%;" />

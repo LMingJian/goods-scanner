@@ -25,16 +25,14 @@ class DatabaseHelper {
     db = await openDatabase(
       join(path, 'GoodsScanner.db'),
       onCreate: (database, version) async {
-        await database.execute(
-          """
+        await database.execute("""
             CREATE TABLE goods (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               name TEXT NOT NULL,
               price TEXT NOT NULL,
               code TEXT
             )
-          """,
-        );
+          """);
       },
       version: 1,
     );
@@ -67,8 +65,11 @@ class DatabaseHelper {
   }
 
   Future<List<Goods>> retrieveGoodsPrice(String? goodsCode) async {
-    final List<Map<String, Object?>> queryResult =
-        await db.query('goods', where: "code = ?", whereArgs: [goodsCode]);
+    final List<Map<String, Object?>> queryResult = await db.query(
+      'goods',
+      where: "code = ?",
+      whereArgs: [goodsCode],
+    );
     return queryResult.map((e) => Goods.fromMap(e)).toList();
   }
 
@@ -81,10 +82,6 @@ class DatabaseHelper {
   }
 
   Future<void> deleteGoods(int id) async {
-    await db.delete(
-      'goods',
-      where: "id = ?",
-      whereArgs: [id],
-    );
+    await db.delete('goods', where: "id = ?", whereArgs: [id]);
   }
 }
