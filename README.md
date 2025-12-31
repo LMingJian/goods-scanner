@@ -1,5 +1,7 @@
 # goods-scanner
 
+@LMingJian 2025
+
 ## 这是什么？
 
 这是一个支持扫描商品条形码并登记价格的 Flutter 应用。
